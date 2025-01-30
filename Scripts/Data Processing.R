@@ -7,7 +7,7 @@ library(ggplot2)
 
 #### First, read and edit in iNaturalist data ####
 
-iNat.data <- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_24_specimen_measurements.csv")
+iNat.data <- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_30_specimen_measurements.csv")
 
 names(iNat.data)[names(iNat.data) == "revised_uncertainty_km"] <- "extent_km" # Changing column names to make collection datasets for later merging 
 
@@ -17,7 +17,7 @@ iNat.data$source <- "iNat" # Add a column for data source
 
 
 # First vertical stripes
-iNat.vertical.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_24_stripes_vertical.csv") 
+iNat.vertical.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_30_stripes_vertical.csv") 
 iNat.vertical.stripe$stripe_distinctness_numerical<-ifelse(iNat.vertical.stripe$stripe_distinctness=="no",0,1) # Assign each stripe a one or a zero depending on distinctness
 iNat.vertical.stripe.by<-by(iNat.vertical.stripe$stripe_distinctness_numerical, iNat.vertical.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
 iNat.vertical.stripe.by<-as.data.frame(iNat.vertical.stripe.by)
@@ -26,7 +26,7 @@ iNat.vertical.stripe.by<-rename(iNat.vertical.stripe.by, "ï..specimen_id"="rown
 
 # Now horizontal
 
-iNat.horizontal.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_24_stripes_horizontal.csv") 
+iNat.horizontal.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_30_stripes_horizontal.csv") 
 iNat.horizontal.stripe$stripe_distinctness_numerical<-ifelse(iNat.horizontal.stripe$stripe_distinctness=="no",0,1)
 iNat.horizontal.stripe.by<-by(iNat.horizontal.stripe$stripe_distinctness_numerical, iNat.horizontal.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
 iNat.horizontal.stripe.by<-as.data.frame(iNat.horizontal.stripe.by)
