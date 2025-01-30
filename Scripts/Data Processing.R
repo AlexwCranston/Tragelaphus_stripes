@@ -43,10 +43,13 @@ iNat.data <- full_join(iNat.data, percent_distinct,
 
 iNat.data <- iNat.data%>% drop_na(extent_km)
 iNat.data <- iNat.data %>% dplyr::filter(extent_km < 200)
+names(iNat.data)[names(iNat.data) == "number_vertstripes"] <- "number_vertstripes_MODEL" # Changing column names to match other dataset
+names(iNat.data)[names(iNat.data) == "number_horizontal_stripes"] <- "number_horizontal_stripes_MODEL" # Changing column names to match other dataset
+
 
 #### Now the same with the collections data ####
                        
-collections.data <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_24_specimen_info.csv")
+collections.data <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_30_specimen_info.csv")
 
 collections.data <- collections.data %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 
@@ -54,33 +57,35 @@ collections.data$source <- "collection"
 
 # Combine the collections specimen info with the specimen measurements
 
-collections.data_2 <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_24_specimen_measurements.csv")
+collections.data_2 <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_30_specimen_measurements.csv")
 collections.data_2 <- collections.data_2 %>% dplyr::filter(flag != "yes") # Same as above, remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 
 
 collections.data <- merge(collections.data, collections.data_2, by = "ï..specimen_id") 
 
-collections.data <- collections.data %>%
-  mutate(number_vertstripes = 
-           rowMeans(data.frame(collections.data$number_vertstripes_right,collections.data$number_vertstripes_left), 
-                    na.rm = TRUE)) # Take the average number of stripes on either side
+## We don't need the averages of stripes and spots on the left and right side of the specimens, we will use right side only as we only have percentage distinctiveness from this side
+## collections.data <- collections.data %>%
+##  mutate(mean_number_vertstripes = 
+##           rowMeans(data.frame(collections.data$number_vertstripes_right,collections.data$number_vertstripes_left), 
+##                    na.rm = TRUE)) # Take the average number of stripes on either side
+
+## collections.data <- collections.data %>%
+##  mutate(mean_number_horizontal_stripes = 
+##           rowMeans(data.frame(collections.data$number_horizontal_stripes_right,collections.data$number_horizontal_stripes_left), 
+##                  na.rm = TRUE)) # Take the average number of stripes on either side # Take the average number of stripes on either side
+
 
 collections.data <- collections.data %>%
-  mutate(number_horizontal_stripes = 
-           rowMeans(data.frame(collections.data$number_horizontal_stripes_right,collections.data$number_horizontal_stripes_left), 
-                    na.rm = TRUE)) # Take the average number of stripes on either side # Take the average number of stripes on either side
-
-
-collections.data <- collections.data %>%
-  mutate(number_spots = 
+ mutate(number_spots = 
            rowMeans(data.frame(collections.data$number_spots_left,collections.data$number_spots_right), 
-                    na.rm = TRUE)) # Take the average number of stripes on either side # Take the average number of stripes on either side
+                   na.rm = TRUE)) %>%
+  mutate(number_spots=round(number_spots, 0)) # Take the average number of spots on either side, round to nearest whole number for ease of use in poisson distribution
 
 # Calculate and Add percent distinctiveness
 
 
 # First vertical stripes
-collections.vertical.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_24_stripes_vertical.csv") 
+collections.vertical.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_30_stripes_vertical.csv") 
 collections.vertical.stripe <- collections.vertical.stripe %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 collections.vertical.stripe$stripe_distinctness_numerical<-ifelse(collections.vertical.stripe$stripe_distinctness=="no",0,1) # Assign each stripe a one or a zero depending on distinctness
 collections.vertical.stripe.by<-by(collections.vertical.stripe$stripe_distinctness_numerical, collections.vertical.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
@@ -90,7 +95,7 @@ collections.vertical.stripe.by<-rename(collections.vertical.stripe.by, "ï..spec
 
 # Now horizontal
 
-collections.horizontal.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_24_stripes_horizontal.csv") 
+collections.horizontal.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_30_stripes_horizontal.csv") 
 collections.horizontal.stripe <- collections.horizontal.stripe %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 collections.horizontal.stripe$stripe_distinctness_numerical<-ifelse(collections.horizontal.stripe$stripe_distinctness=="no",0,1)
 collections.horizontal.stripe.by<-by(collections.horizontal.stripe$stripe_distinctness_numerical, collections.horizontal.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
@@ -106,8 +111,11 @@ percent_distinct <- full_join(collections.horizontal.stripe.by, collections.vert
 collections.data <- full_join(collections.data, percent_distinct,
                        by = "ï..specimen_id")
 
+
 collections.data <- collections.data %>% dplyr::filter(extent_km < 200)
 names(collections.data)[names(collections.data) == "revised_species"] <- "species" # Changing column names to match other dataset
+names(collections.data)[names(collections.data) == "number_vertstripes_right"] <- "number_vertstripes_MODEL" # Changing column names to match iNat. We took distinctness measurements on the right side of the skins only, so this is the data we will use in the model
+names(collections.data)[names(collections.data) == "number_horizontal_stripes_right"] <- "number_horizontal_stripes_MODEL" # Changing column names as above
 
 
 #### Combine iNat and Collections Data ####
@@ -120,7 +128,20 @@ iNat.data_final <- iNat.data %>% select(all_of(common_col_names))
 final.data <- rbind(iNat.data_final, collections.data_final)
 
 final.data <- final.data %>% select(-c("legs_white","midline_white", "face_white","throat_white")) # Drop columns that we don't want
-glimpse(final.data)
+glimpse(final.data) # Check that everything is as we expect
+
+
+# Change the NAs in percent distinctiveness to zeros to prevent NAs being introduced in calculations
+
+final.data <- final.data %>% mutate(horizontal_percent_distinct = ifelse(is.na(horizontal_percent_distinct), 0, horizontal_percent_distinct),
+                                                                  vertical_percent_distinct = ifelse(is.na(vertical_percent_distinct), 0, vertical_percent_distinct))
+
+
+## Calculate number of distinct stripes 
+
+final.data <- final.data %>% mutate(n_distinct_stripes = ((number_vertstripes_MODEL*vertical_percent_distinct) + (number_horizontal_stripes_MODEL*horizontal_percent_distinct)))
+final.data <- final.data %>% mutate(n_distinct_stripes=round(n_distinct_stripes, 0)) # We'll remove the need for this step later when the data is fully clean but for now, round to the nearest number to ensure only integers so that we can use poisson distribution
+
 
 ## Predictor variables
 
@@ -163,6 +184,7 @@ TabanidActivity_points <- raster::extract(TabanidActivity, circles_sf, fun=mean,
 
 final.data_withPredictors <- cbind(TsetsePresence_points, TabanidActivity_points, final.data)
 
+final.data_withPredictors <- final.data_withPredictors %>% select(-"ID") # Delete junk columns
 final.data_withPredictors <- final.data_withPredictors %>% select(-"ID")
 
 # Rename some columns 
@@ -175,13 +197,5 @@ final.data_withPredictors<-final.data_withPredictors %>%
   )
 
 
-final.data_withPredictors <- final.data_withPredictors %>% mutate(horizontal_percent_distinct = ifelse(is.na(horizontal_percent_distinct), 0, horizontal_percent_distinct),
-                                                                  vertical_percent_distinct = ifelse(is.na(vertical_percent_distinct), 0, vertical_percent_distinct))
-
-## Calculate number of distinct stripes 
-
-final.data_withPredictors <- final.data_withPredictors %>% mutate(n_distinct_stripes = ((number_vertstripes*vertical_percent_distinct) + (number_horizontal_stripes*horizontal_percent_distinct)))
-
- 
-write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_specimen_info_2025_01_24_withPredictorVariables.csv")
+write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_2025_01_30_withPredictorVariables.csv")
 
