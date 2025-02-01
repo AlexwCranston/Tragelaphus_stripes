@@ -7,7 +7,7 @@ library(ggplot2)
 
 #### First, read and edit in iNaturalist data ####
 
-iNat.data <- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_30_specimen_measurements.csv")
+iNat.data <- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_31_specimen_measurements.csv")
 
 names(iNat.data)[names(iNat.data) == "revised_uncertainty_km"] <- "extent_km" # Changing column names to make collection datasets for later merging 
 
@@ -17,7 +17,7 @@ iNat.data$source <- "iNat" # Add a column for data source
 
 
 # First vertical stripes
-iNat.vertical.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_30_stripes_vertical.csv") 
+iNat.vertical.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_31_stripes_vertical.csv") 
 iNat.vertical.stripe$stripe_distinctness_numerical<-ifelse(iNat.vertical.stripe$stripe_distinctness=="no",0,1) # Assign each stripe a one or a zero depending on distinctness
 iNat.vertical.stripe.by<-by(iNat.vertical.stripe$stripe_distinctness_numerical, iNat.vertical.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
 iNat.vertical.stripe.by<-as.data.frame(iNat.vertical.stripe.by)
@@ -26,7 +26,7 @@ iNat.vertical.stripe.by<-rename(iNat.vertical.stripe.by, "ï..specimen_id"="rown
 
 # Now horizontal
 
-iNat.horizontal.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_30_stripes_horizontal.csv") 
+iNat.horizontal.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_31_stripes_horizontal.csv") 
 iNat.horizontal.stripe$stripe_distinctness_numerical<-ifelse(iNat.horizontal.stripe$stripe_distinctness=="no",0,1)
 iNat.horizontal.stripe.by<-by(iNat.horizontal.stripe$stripe_distinctness_numerical, iNat.horizontal.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
 iNat.horizontal.stripe.by<-as.data.frame(iNat.horizontal.stripe.by)
@@ -49,7 +49,7 @@ names(iNat.data)[names(iNat.data) == "number_horizontal_stripes"] <- "number_hor
 
 #### Now the same with the collections data ####
                        
-collections.data <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_30_specimen_info.csv")
+collections.data <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_31_specimen_info.csv")
 
 collections.data <- collections.data %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 
@@ -57,7 +57,7 @@ collections.data$source <- "collection"
 
 # Combine the collections specimen info with the specimen measurements
 
-collections.data_2 <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_30_specimen_measurements.csv")
+collections.data_2 <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_31_specimen_measurements.csv")
 collections.data_2 <- collections.data_2 %>% dplyr::filter(flag != "yes") # Same as above, remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 
 
@@ -85,7 +85,7 @@ collections.data <- collections.data %>%
 
 
 # First vertical stripes
-collections.vertical.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_30_stripes_vertical.csv") 
+collections.vertical.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_31_stripes_vertical.csv") 
 collections.vertical.stripe <- collections.vertical.stripe %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 collections.vertical.stripe$stripe_distinctness_numerical<-ifelse(collections.vertical.stripe$stripe_distinctness=="no",0,1) # Assign each stripe a one or a zero depending on distinctness
 collections.vertical.stripe.by<-by(collections.vertical.stripe$stripe_distinctness_numerical, collections.vertical.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
@@ -95,7 +95,7 @@ collections.vertical.stripe.by<-rename(collections.vertical.stripe.by, "ï..spec
 
 # Now horizontal
 
-collections.horizontal.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_30_stripes_horizontal.csv") 
+collections.horizontal.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_01_31_stripes_horizontal.csv") 
 collections.horizontal.stripe <- collections.horizontal.stripe %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 collections.horizontal.stripe$stripe_distinctness_numerical<-ifelse(collections.horizontal.stripe$stripe_distinctness=="no",0,1)
 collections.horizontal.stripe.by<-by(collections.horizontal.stripe$stripe_distinctness_numerical, collections.horizontal.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
@@ -193,9 +193,10 @@ final.data_withPredictors <- final.data_withPredictors %>% select(-"ID")
 final.data_withPredictors<-final.data_withPredictors %>% 
   rename(
     TsetsePresencePROB = fuscgroup ,
-    TabanidActivity = RHpm01 
+    TabanidActivity = RHpm01,
+    specimen_ID = ï..specimen_id
   )
 
 
-write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_2025_01_30.csv")
+write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_2025_01_31.csv")
 
