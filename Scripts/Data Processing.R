@@ -7,7 +7,8 @@ library(ggplot2)
 
 #### First, read and edit in iNaturalist data ####
 
-iNat.data <- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_31_specimen_measurements.csv")
+iNat.data <- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_02_14_specimen_measurements.csv")
+iNat.data <- iNat.data %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 
 names(iNat.data)[names(iNat.data) == "revised_uncertainty_km"] <- "extent_km" # Changing column names to make collection datasets for later merging 
 
@@ -17,7 +18,8 @@ iNat.data$source <- "iNat" # Add a column for data source
 
 
 # First vertical stripes
-iNat.vertical.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_31_stripes_vertical.csv") 
+iNat.vertical.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_02_14_stripes_vertical.csv") 
+iNat.vertical.stripe <- iNat.vertical.stripe %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 iNat.vertical.stripe$stripe_distinctness_numerical<-ifelse(iNat.vertical.stripe$stripe_distinctness=="no",0,1) # Assign each stripe a one or a zero depending on distinctness
 iNat.vertical.stripe.by<-by(iNat.vertical.stripe$stripe_distinctness_numerical, iNat.vertical.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
 iNat.vertical.stripe.by<-as.data.frame(iNat.vertical.stripe.by)
@@ -26,7 +28,8 @@ iNat.vertical.stripe.by<-rename(iNat.vertical.stripe.by, "ï..specimen_id"="rown
 
 # Now horizontal
 
-iNat.horizontal.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_01_31_stripes_horizontal.csv") 
+iNat.horizontal.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_02_14_stripes_horizontal.csv") 
+iNat.horizontal.stripe <- iNat.horizontal.stripe %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 iNat.horizontal.stripe$stripe_distinctness_numerical<-ifelse(iNat.horizontal.stripe$stripe_distinctness=="no",0,1)
 iNat.horizontal.stripe.by<-by(iNat.horizontal.stripe$stripe_distinctness_numerical, iNat.horizontal.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
 iNat.horizontal.stripe.by<-as.data.frame(iNat.horizontal.stripe.by)
@@ -121,13 +124,13 @@ names(collections.data)[names(collections.data) == "number_horizontal_stripes_ri
 #### Combine iNat and Collections Data ####
 
 common_col_names <- intersect(names(collections.data), names(iNat.data))
-collections.data_final <- collections.data %>% select(all_of(common_col_names)) 
+collections.data_final <- collections.data %>% dplyr::select(all_of(common_col_names)) 
 
-iNat.data_final <- iNat.data %>% select(all_of(common_col_names))
+iNat.data_final <- iNat.data %>% dplyr::select(all_of(common_col_names))
 
 final.data <- rbind(iNat.data_final, collections.data_final)
 
-final.data <- final.data %>% select(-c("legs_white","midline_white", "face_white","throat_white")) # Drop columns that we don't want
+final.data <- final.data %>% dplyr::select(-c("legs_white","midline_white", "face_white","throat_white")) # Drop columns that we don't want
 glimpse(final.data) # Check that everything is as we expect
 
 
@@ -184,8 +187,8 @@ TabanidActivity_points <- raster::extract(TabanidActivity, circles_sf, fun=mean,
 
 final.data_withPredictors <- cbind(TsetsePresence_points, TabanidActivity_points, final.data)
 
-final.data_withPredictors <- final.data_withPredictors %>% select(-"ID") # Delete junk columns
-final.data_withPredictors <- final.data_withPredictors %>% select(-"ID")
+final.data_withPredictors <- final.data_withPredictors %>% dplyr::select(-"ID") # Delete junk columns
+final.data_withPredictors <- final.data_withPredictors %>% dplyr::select(-"ID")
 
 # Rename some columns 
 
@@ -198,5 +201,5 @@ final.data_withPredictors<-final.data_withPredictors %>%
   )
 
 
-write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_2025_01_31.csv")
+write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_2025_02_14.csv")
 
