@@ -224,15 +224,17 @@ na_sf <- st_as_sf(na_points, coords = c("longitude", "latitude"), crs = 4326)
 plot(TsetsePresence)
 plot(na_sf, pch = 16, col = "red", add=TRUE)
 
-## Most points missing are values very close to the coast, lets replace the missing values with IDW 
+## Most points missing are values very close to the coast or on islands in lakes, lets replace the missing values with IDW 
 
-final.data_withPredictors_sf <- st_as_sf(final.data_withPredictors, coords = c("longitude", "latitude"), crs = 4326)
 
-# Known values (non-NaN)
+final.data_withPredictors_sf <- st_as_sf(final.data_withPredictors, coords = c("longitude", "latitude"), crs = 4326) # First convert dataframe to spatial object
+
+## Start with TsetsePresencePROB ####
+
+# Split into known and missing points
 known_points <- final.data_withPredictors_sf %>%
   filter(!is.nan(TsetsePresencePROB))
 
-# Missing values (NaN)
 missing_points <- final.data_withPredictors_sf %>%
   filter(is.nan(TsetsePresencePROB))
 
@@ -247,7 +249,7 @@ missing_points$TsetsePresencePROB <- idw_model$var1.pred
 
 final.data_withPredictors_sf <- bind_rows(known_points, missing_points)
 
-
+## Next TabanidActivity ####
 
 # Known values (non-NaN)
 known_points <- final.data_withPredictors_sf %>%
@@ -256,6 +258,48 @@ known_points <- final.data_withPredictors_sf %>%
 # Missing values (NaN)
 missing_points <- final.data_withPredictors_sf %>%
   filter(is.nan(TabanidActivity))
+
+# Convert to Spatial format for gstat
+known_points_sp <- as(known_points, "Spatial")
+missing_points_sp <- as(missing_points, "Spatial")
+
+
+idw_model <- gstat::idw(TabanidActivity ~ 1, known_points_sp, newdata = missing_points_sp, idp = 2)
+
+missing_points$TabanidActivity <- idw_model$var1.pred
+
+final.data_withPredictors_sf <- bind_rows(known_points, missing_points)
+
+# Next PNV ####
+
+# Known values (non-NaN)
+known_points <- final.data_withPredictors_sf %>%
+  filter(!is.nan(PNV))
+
+# Missing values (NaN)
+missing_points <- final.data_withPredictors_sf %>%
+  filter(is.nan(PNV))
+
+# Convert to Spatial format for gstat
+known_points_sp <- as(known_points, "Spatial")
+missing_points_sp <- as(missing_points, "Spatial")
+
+
+idw_model <- gstat::idw(PNV ~ 1, known_points_sp, newdata = missing_points_sp, idp = 2)
+
+missing_points$PNV <- idw_model$var1.pred
+
+final.data_withPredictors_sf <- bind_rows(known_points, missing_points)
+
+## Now convert sf back to dataframe and export ####
+
+
+# Convert sf object back to a dataframe
+final.data_withPredictors <- final.data_withPredictors_sf %>%
+  st_drop_geometry() %>%  # Removes the spatial component
+  mutate(longitude = st_coordinates(final.data_withPredictors_sf)[, 1],  # Extract X (Longitude)
+         latitude = st_coordinates(final.data_withPredictors_sf)[, 2])   # Extract Y (Latitude)
+
 
 write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_2025_02_14.csv")
 
