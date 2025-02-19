@@ -153,6 +153,7 @@ TsetsePresence<-raster("Rasters/Outputs/AllGroupsPROBwNULL.tif") # Read in the r
 
 TabanidActivity<-raster("Rasters/Outputs/MonthsTabanidActivitywNUL.tif") # Read in the raster for the Tabanid Fly Activity
 
+PNV <- raster("Rasters/PNV_Hengl/pnv_fapar_proba.v.annual_d_1km_s0..0cm_2014..2017_v0.1.tif") 
 
 #convert extent from km to metres 
 
@@ -171,24 +172,27 @@ circles_sf <- st_buffer(final.data_sf, dist = final.data_sf$extent_m)
 plot(TsetsePresence)
 plot(circles_sf, pch = 16, col = "red", add=TRUE)
 
-
 plot(TabanidActivity, xlim =c(-20,55), ylim=c(-40,40))
 plot(circles_sf, pch = 16, col = "red", add=TRUE)
 
+plot(PNV, xlim =c(-20,55), ylim=c(-40,40))
+plot(circles_sf, pch = 16, col = "red", add=TRUE)
 
 # Use the extract function from the package raster to take values from the raster that are covered by the circle. 
 # Using fun=mean will return the mean value covered by each cirlce. df = TRUE tells the output to be a dataframe
 
 TsetsePresence_points <- raster::extract(TsetsePresence, circles_sf, fun=mean, df=TRUE, na.rm = TRUE)
 TabanidActivity_points <- raster::extract(TabanidActivity, circles_sf, fun=mean, df=TRUE, na.rm = TRUE)
+PNV_points <- raster::extract(PNV, circles_sf, fun=mean, df=TRUE, na.rm = TRUE)
+
 
 
 # Bind these with the original data
 
-final.data_withPredictors <- cbind(TsetsePresence_points, TabanidActivity_points, final.data)
+final.data_withPredictors <- cbind(TsetsePresence_points, TabanidActivity_points, PNV_points, final.data)
 
-final.data_withPredictors <- final.data_withPredictors %>% dplyr::select(-"ID") # Delete junk columns
-final.data_withPredictors <- final.data_withPredictors %>% dplyr::select(-"ID")
+final.data_withPredictors <- final.data_withPredictors %>%
+  dplyr::select(-matches("^ID$"))
 
 # Rename some columns 
 
@@ -197,9 +201,61 @@ final.data_withPredictors<-final.data_withPredictors %>%
   rename(
     TsetsePresencePROB = fuscgroup ,
     TabanidActivity = RHpm01,
+    PNV = pnv_fapar_proba.v.annual_d_1km_s0..0cm_2014..2017_v0.1,
     specimen_ID = ï..specimen_id
   )
 
+### Some Points are missing, we can visualise them below
+
+na_points <- final.data_withPredictors %>% 
+  dplyr::filter(is.nan(final.data_withPredictors$TsetsePresencePROB))
+na_sf <- st_as_sf(na_points, coords = c("longitude", "latitude"), crs = 4326)
+
+na_points <- final.data_withPredictors %>% 
+  dplyr::filter(is.nan(final.data_withPredictors$TabanidActivity))
+na_sf <- st_as_sf(na_points, coords = c("longitude", "latitude"), crs = 4326)
+
+na_points <- final.data_withPredictors %>% 
+  dplyr::filter(is.nan(final.data_withPredictors$PNV))
+na_sf <- st_as_sf(na_points, coords = c("longitude", "latitude"), crs = 4326)
+
+
+
+plot(TsetsePresence)
+plot(na_sf, pch = 16, col = "red", add=TRUE)
+
+## Most points missing are values very close to the coast, lets replace the missing values with IDW 
+
+final.data_withPredictors_sf <- st_as_sf(final.data_withPredictors, coords = c("longitude", "latitude"), crs = 4326)
+
+# Known values (non-NaN)
+known_points <- final.data_withPredictors_sf %>%
+  filter(!is.nan(TsetsePresencePROB))
+
+# Missing values (NaN)
+missing_points <- final.data_withPredictors_sf %>%
+  filter(is.nan(TsetsePresencePROB))
+
+# Convert to Spatial format for gstat
+known_points_sp <- as(known_points, "Spatial")
+missing_points_sp <- as(missing_points, "Spatial")
+
+
+idw_model <- gstat::idw(TsetsePresencePROB ~ 1, known_points_sp, newdata = missing_points_sp, idp = 2)
+
+missing_points$TsetsePresencePROB <- idw_model$var1.pred
+
+final.data_withPredictors_sf <- bind_rows(known_points, missing_points)
+
+
+
+# Known values (non-NaN)
+known_points <- final.data_withPredictors_sf %>%
+  filter(!is.nan(TabanidActivity))
+
+# Missing values (NaN)
+missing_points <- final.data_withPredictors_sf %>%
+  filter(is.nan(TabanidActivity))
 
 write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_2025_02_14.csv")
 
