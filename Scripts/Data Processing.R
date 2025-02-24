@@ -63,8 +63,12 @@ collections.data$source <- "collection"
 collections.data_2 <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_02_21_specimen_measurements.csv")
 collections.data_2 <- collections.data_2 %>% dplyr::filter(flag != "yes") # Same as above, remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 
-
 collections.data <- merge(collections.data, collections.data_2, by = "ï..specimen_id") 
+
+mean_body_size <- collections.data %>%
+  group_by(revised_species, sex) %>%
+  summarise(mean_value = mean(skin_length_mm, na.rm = TRUE)) %>%
+  filter(!is.na(sex))
 
 ## We don't need the averages of stripes and spots on the left and right side of the specimens, we will use right side only as we only have percentage distinctiveness from this side
 ## collections.data <- collections.data %>%
@@ -120,6 +124,13 @@ names(collections.data)[names(collections.data) == "revised_species"] <- "specie
 names(collections.data)[names(collections.data) == "number_vertstripes_right"] <- "number_vertstripes_MODEL" # Changing column names to match iNat. We took distinctness measurements on the right side of the skins only, so this is the data we will use in the model
 names(collections.data)[names(collections.data) == "number_horizontal_stripes_right"] <- "number_horizontal_stripes_MODEL" # Changing column names as above
 
+#### Add  mean body size to iNat data
+
+names(mean_body_size)[names(mean_body_size) == "revised_species"] <- "species" # Changing column names to match other dataset
+names(mean_body_size)[names(mean_body_size) == "mean_value"] <- "skin_length_mm" # Changing column names to match other dataset
+
+iNat.data <- iNat.data %>%
+  left_join(mean_body_size, by = c("species", "sex"))
 
 #### Combine iNat and Collections Data ####
 
@@ -132,7 +143,6 @@ final.data <- rbind(iNat.data_final, collections.data_final)
 
 final.data <- final.data %>% dplyr::select(-c("legs_white","midline_white", "face_white","throat_white")) # Drop columns that we don't want
 glimpse(final.data) # Check that everything is as we expect
-
 
 # Change the NAs in percent distinctiveness to zeros to prevent NAs being introduced in calculations
 
@@ -158,6 +168,10 @@ PNV <- raster("Rasters/PNV_Hengl/pnv_fapar_proba.v.annual_d_1km_s0..0cm_2014..20
 #convert extent from km to metres 
 
 final.data$extent_m <- final.data$extent_km*1000 
+
+#convert skin length from mm to metres 
+
+final.data$skin_length_m <- final.data$skin_length_mm/1000 
 
 # Turn the data frame into an sf object with the CRS WGS84 
 
