@@ -9,7 +9,7 @@ library(gstat)
 
 # Read in Stripe Data
 
-data <- read.csv("Data_backup/Working Copy/Processed Data/Combined Dataset_2025_02_14.csv")
+data <- read.csv("Data_backup/Working Copy/Processed Data/Combined Dataset_2025_02_21.csv")
 
 View(data %>% group_by(species) %>% summarise(n = n())) # Look at the numbers of samples by species and sex
 View(data %>% group_by(source, sex) %>% summarise(n = n())) # Look at the numbers of samples by source and sex. We can see far more NAs for sex in collection data than iNat
@@ -45,7 +45,7 @@ ggplot() + geom_sf(data = data.spatial %>% filter(species=="derbianus")) +
 
 split_plot_Tsetse <- ggplot(aes(TsetsePresencePROB, n_distinct_stripes), data = data) + 
   geom_point() + 
-  facet_wrap(~ species) + # create a facet for each mountain range
+  facet_wrap(~ revised_subspecies) + # create a facet for each mountain range
   xlab("TsetsePresenceProb") + 
   ylab("N of stripes")
 
