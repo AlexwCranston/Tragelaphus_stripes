@@ -17,6 +17,7 @@ View(data %>% group_by(source, sex) %>% summarise(n = n())) # Look at the number
 
 data.spatial <- st_as_sf(data, crs = 4326, coords = 
            c("longitude", "latitude"))
+
 data.spatial  <- st_transform(data.spatial, crs = 3857)
 
 
@@ -45,21 +46,21 @@ ggplot() + geom_sf(data = data.spatial %>% filter(species=="derbianus")) +
 
 split_plot_Tsetse <- ggplot(aes(TsetsePresencePROB, n_distinct_stripes), data = data) + 
   geom_point() + 
-  facet_wrap(~ revised_subspecies) + # create a facet for each mountain range
+  facet_wrap(~ species) + 
   xlab("TsetsePresenceProb") + 
   ylab("N of stripes")
 
 
 split_plot_Tabanid <- ggplot(aes(TabanidActivity, n_distinct_stripes), data = data) + 
   geom_point() + 
-  facet_wrap(~ species) + # create a facet for each mountain range
+  facet_wrap(~ species) + 
   xlab("Tabanid Activity") + 
   ylab("N of stripes")
 
 
 split_plot_PNV <- ggplot(aes(PNV, n_distinct_stripes), data = data) + 
   geom_point() + 
-  facet_wrap(~ species) + # create a facet for each mountain range
+  facet_wrap(~ species) + 
   xlab("PNV") + 
   ylab("N of stripes")
 
@@ -75,12 +76,25 @@ ggplot(data %>%  filter(species == "angasii"), aes(x=n_distinct_stripes)) +
   labs(x="Number of Distinct Stripe", title="T. angasii") +
   theme_bw(base_size = 20)
 
+ggplot(data %>%  filter(species == "angasii"), aes(x=(n_distinct_stripes/skin_length_m))) +
+  geom_density(fill="#20447a") +
+  labs(x="Number of Distinct Stripe", title="T. angasii") +
+  theme_bw(base_size = 20)
+
+
+
 # Plot variation with sex plotted separately
 
 ggplot(data %>%  filter(species == "angasii") %>% filter(!is.na(sex)), aes(x=n_distinct_stripes, fill=sex, color=sex)) +
   geom_density(alpha = 0.4) +
   labs(x="Number of Distinct Stripe", title="T. angasii") +
   theme_bw(base_size = 20)
+
+ggplot(data %>%  filter(species == "angasii") %>% filter(!is.na(sex)), aes(x=n_distinct_stripes/skin_length_m, fill=sex, color=sex)) +
+  geom_density(alpha = 0.4) +
+  labs(x="Number of Distinct Stripe", title="T. angasii") +
+  theme_bw(base_size = 20)
+
 
 
 # Plot variation spatially
@@ -149,11 +163,22 @@ ggplot(data %>%  filter(species == "buxtoni"), aes(x=n_distinct_stripes)) +
   labs(x="Number of Distinct Stripe", title="T. buxtoni") +
   theme_bw(base_size = 20)
 
+ggplot(data %>%  filter(species == "buxtoni"), aes(x=n_distinct_stripes/skin_length_m)) +
+  geom_density(fill="#20447a") +
+  labs(x="Number of Distinct Stripe (relative to body size)", title="T. buxtoni") +
+  theme_bw(base_size = 20)
+
+
 # Plot variation with sex plotted separately
 
 ggplot(data %>%  filter(species == "buxtoni") %>% filter(!is.na(sex)), aes(x=n_distinct_stripes, fill=sex, color=sex)) +
   geom_density(alpha = 0.4) +
   labs(x="Number of Distinct Stripe", title="T. buxtoni") +
+  theme_bw(base_size = 20)
+
+ggplot(data %>%  filter(species == "buxtoni") %>% filter(!is.na(sex)), aes(x=n_distinct_stripes/skin_length_m, fill=sex, color=sex)) +
+  geom_density(alpha = 0.4) +
+  labs(x="Number of Distinct Stripe (relative to body size)", title="T. buxtoni") +
   theme_bw(base_size = 20)
 
 
@@ -223,6 +248,12 @@ ggplot(data %>%  filter(species == "derbianus"), aes(x=n_distinct_stripes)) +
   labs(x="Number of Distinct Stripe", title="T. derbianus") +
   theme_bw(base_size = 20)
 
+
+ggplot(data %>%  filter(species == "derbianus"), aes(x=n_distinct_stripes/skin_length_m)) +
+  geom_density(fill="#20447a") +
+  labs(x="Number of Distinct Stripe (relative to body size)", title="T. buxtoni") +
+  theme_bw(base_size = 20)
+
 # Plot variation with sex plotted separately
 
 ggplot(data %>%  filter(species == "derbianus") %>% filter(!is.na(sex)), aes(x=n_distinct_stripes, fill=sex, color=sex)) +
@@ -230,6 +261,11 @@ ggplot(data %>%  filter(species == "derbianus") %>% filter(!is.na(sex)), aes(x=n
   labs(x="Number of Distinct Stripe", title="T. derbianus") +
   theme_bw(base_size = 20)
 
+
+ggplot(data %>%  filter(species == "derbianus") %>% filter(!is.na(sex)), aes(x=n_distinct_stripes/skin_length_m, fill=sex, color=sex)) +
+  geom_density(alpha = 0.4) +
+  labs(x="Number of Distinct Stripe (relative to body size)", title="T. buxtoni") +
+  theme_bw(base_size = 20)
 
 # Plot variation spatially
 
@@ -297,6 +333,12 @@ ggplot(data %>%  filter(species == "eurycerus"), aes(x=n_distinct_stripes)) +
   labs(x="Number of Distinct Stripe", title="T. eurycerus") +
   theme_bw(base_size = 20)
 
+ggplot(data %>%  filter(species == "derbianus"), aes(x=n_distinct_stripes/skin_length_m)) +
+  geom_density(fill="#20447a") +
+  labs(x="Number of Distinct Stripe (relative to body size)", title="T. buxtoni") +
+  theme_bw(base_size = 20)
+
+
 # Plot variation with sex plotted separately
 
 ggplot(data %>%  filter(species == "eurycerus") %>% filter(!is.na(sex)), aes(x=n_distinct_stripes, fill=sex, color=sex)) +
@@ -304,7 +346,10 @@ ggplot(data %>%  filter(species == "eurycerus") %>% filter(!is.na(sex)), aes(x=n
   labs(x="Number of Distinct Stripe", title="T. eurycerus") +
   theme_bw(base_size = 20)
 
-
+ggplot(data %>%  filter(species == "eurycerus") %>% filter(!is.na(sex)), aes(x=n_distinct_stripes/skin_length_m, fill=sex, color=sex)) +
+  geom_density(alpha = 0.4) +
+  labs(x="Number of Distinct Stripe (relative to body size)", title="T. eurycerus") +
+  theme_bw(base_size = 20)
 # Plot variation spatially
 
 # First just plot raw points
