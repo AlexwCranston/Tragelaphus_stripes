@@ -52,7 +52,7 @@ names(iNat.data)[names(iNat.data) == "number_horizontal_stripes"] <- "number_hor
 
 #### Now the same with the collections data ####
                        
-collections.data <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_02_21_specimen_info.csv")
+collections.data <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_03_03_specimen_info.csv")
 
 collections.data <- collections.data %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 
@@ -60,7 +60,7 @@ collections.data$source <- "collection"
 
 # Combine the collections specimen info with the specimen measurements
 
-collections.data_2 <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_02_21_specimen_measurements.csv")
+collections.data_2 <- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_03_03_specimen_measurements.csv")
 collections.data_2 <- collections.data_2 %>% dplyr::filter(flag != "yes") # Same as above, remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 
 collections.data <- merge(collections.data, collections.data_2, by = "ï..specimen_id") 
@@ -92,7 +92,7 @@ collections.data <- collections.data %>%
 
 
 # First vertical stripes
-collections.vertical.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_02_21_stripes_vertical.csv") 
+collections.vertical.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_03_03_stripes_vertical.csv") 
 collections.vertical.stripe <- collections.vertical.stripe %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 collections.vertical.stripe$stripe_distinctness_numerical<-ifelse(collections.vertical.stripe$stripe_distinctness=="no",0,1) # Assign each stripe a one or a zero depending on distinctness
 collections.vertical.stripe.by<-by(collections.vertical.stripe$stripe_distinctness_numerical, collections.vertical.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
@@ -102,7 +102,7 @@ collections.vertical.stripe.by<-rename(collections.vertical.stripe.by, "ï..spec
 
 # Now horizontal
 
-collections.horizontal.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_02_21_stripes_horizontal.csv") 
+collections.horizontal.stripe<- read.csv("Data_backup/Working Copy/Collections/Stripes Datasheet_2025_03_03_stripes_horizontal.csv") 
 collections.horizontal.stripe <- collections.horizontal.stripe %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 collections.horizontal.stripe$stripe_distinctness_numerical<-ifelse(collections.horizontal.stripe$stripe_distinctness=="no",0,1)
 collections.horizontal.stripe.by<-by(collections.horizontal.stripe$stripe_distinctness_numerical, collections.horizontal.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
@@ -235,7 +235,7 @@ na_sf <- st_as_sf(na_points, coords = c("longitude", "latitude"), crs = 4326)
 
 
 
-plot(TsetsePresence)
+plot(PNV)
 plot(na_sf, pch = 16, col = "red", add=TRUE)
 
 ## Most points missing are values very close to the coast or on islands in lakes, lets replace the missing values with IDW 
@@ -315,5 +315,5 @@ final.data_withPredictors <- final.data_withPredictors_sf %>%
          latitude = st_coordinates(final.data_withPredictors_sf)[, 2])   # Extract Y (Latitude)
 
 
-write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_2025_02_21.csv")
+write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_2025_03_03.csv")
 
