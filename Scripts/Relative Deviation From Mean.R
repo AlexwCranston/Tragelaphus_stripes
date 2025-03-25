@@ -5,36 +5,41 @@ library(dplyr)
 library(ggplot2)
 library(forcats)
 
-#Load data
 
-
-data_raw <- read.csv("Data_Backup/Working Copy/Processed Data/Combined Dataset_2025_02_21.csv")
+data_raw <- read.csv("Data_Backup/Working Copy/Processed Data/Combined Dataset_2025_03_17.csv")
 
 data_raw$species <- as.factor(data_raw$species) 
+data_raw$sex <- as.factor(data_raw$sex) 
+
 data_raw$species <- fct_recode(data_raw$species, "scriptus" = "sylvaticus") # Make all bushbuck same species
-
-data_raw <- data_raw %>% dplyr::filter(age == "adult"| is.na(age))
-
 
 ## data <- data %>% mutate(revised.sex = ifelse(is.na(sex), "Undetermined", sex)) # Define NAs in sex as "undetermined"
 
 data <- data_raw %>% drop_na(TsetsePresencePROB) %>% 
-  drop_na(species)   #Drop NAs for fixed effects
+  drop_na(species) %>% 
+  drop_na(TabanidActivity) %>%
+  drop_na(sex)  #Drop NAs for fixed effects
 
-# data$relative_n_stripes <- data$n_distinct_stripes/data$skin_length_m # Add column for number of stripes relative to bodysize
+data <- data %>% filter(age == "adult"| is.na(age))
+
+data$relative_n_stripes <- data$n_distinct_stripes/data$skin_length_m # Add column for number of stripes relative to bodysize
+data$relative_n_stripes <- round(data$relative_n_stripes, 0) # Round so these are whole integers
 
 
 data$TsetsePresencePROB <- scale(data$TsetsePresencePROB, center = TRUE, scale = FALSE)
-data$n_distinct_stripes <- scale(data$n_distinct_stripes, center = TRUE, scale = FALSE)
+data$relative_n_stripes <- scale(data$n_distinct_stripes, center = TRUE, scale = FALSE)
 
 
 data <-data %>%
   group_by(species) %>%
-  summarise(Tsetse_mean_value = mean(TsetsePresencePROB), stripe_mean_value = median(n_distinct_stripes, na.rm =TRUE)) %>%
+  summarise(Tsetse_mean_value = mean(TsetsePresencePROB), stripe_mean_value = median(relative_n_stripes, na.rm =TRUE),
+            PNV_mean_value = mean(PNV), Tabanid_mean_value = mean(TabanidActivity)) %>%
   left_join(data, by="species")
 
-data <- data %>% mutate(ContrastStripe = (n_distinct_stripes-stripe_mean_value)/abs(stripe_mean_value), 
-                        ContrastTsetse = (TsetsePresencePROB-Tsetse_mean_value)/abs(Tsetse_mean_value)) 
+data <- data %>% mutate(ContrastStripe = (relative_n_stripes-stripe_mean_value)/abs(stripe_mean_value), 
+                        ContrastTsetse = (TsetsePresencePROB-Tsetse_mean_value)/abs(Tsetse_mean_value),
+                        ContrastPNV = (PNV-PNV_mean_value)/abs(PNV_mean_value),
+                        ContrastTabanid = (TabanidActivity-Tabanid_mean_value)/abs(Tabanid_mean_value)) 
 
 
 ggplot(data, aes(x = ContrastTsetse, y = ContrastStripe, color=species)) +
@@ -44,10 +49,8 @@ ggplot(data, aes(x = ContrastTsetse, y = ContrastStripe, color=species)) +
   annotate("rect", xmin = -Inf, xmax = 0, ymin = 0, ymax = Inf, fill = "red", alpha = 0.1) +  # Upper left (contradicts)
   annotate("rect", xmin = 0, xmax = Inf, ymin = -Inf, ymax = 0, fill = "red", alpha = 0.1) +  # Lower right (contradicts)
   geom_point(aes(color = species), alpha = 0.7, size = 2) +
-  geom_hline(yintercept = 0, linetype = "dashed") +  # Horizontal reference line
-  geom_vline(xintercept = 0, linetype = "dashed") +  # Vertical reference line
-  geom_smooth(method = "lm",color ="blue", se = FALSE) +
-  scale_shape_manual(values = c(17, 19), labels = c("Contradicts", "Supports")) +
+  geom_hline(yintercept = 0, linetype = "dashed") +  
+  geom_vline(xintercept = 0, linetype = "dashed") +
   scale_color_manual(values = c(
     "angasii" = "#1B9E77", "buxtoni" = "#D95F02", "derbianus" = "#7570B3", 
     "eurycerus" = "#E7298A", "imberbis" = "#66A61E", "oryx" = "#E6AB02",
@@ -57,15 +60,14 @@ ggplot(data, aes(x = ContrastTsetse, y = ContrastStripe, color=species)) +
 theme_bw()
 
 
+spearman_test.Tsetse <- cor.test(data$ContrastStripe, data$ContrastTsetse, method = "spearman")
+spearman_test.PNV <- cor.test(data$ContrastStripe, data$ContrastPNV, method = "spearman")
+spearman_test.Tabanid <- cor.test(data$ContrastStripe, data$ContrastTabanid, method = "spearman")
 
-pearson_test <- cor.test(data$ContrastStripe, data$ContrastTsetse, method = "pearson")
-pearson_test
 
-
-
-spearman_test <- cor.test(data$ContrastStripe, data$ContrastTsetse, method = "spearman")
-spearman_test
-
+spearman_test.Tsetse
+spearman_test.PNV
+spearman_test.Tabanid
 
 # Count the number of supporting points
 supporting_points <- sum((data$ContrastStripe * data$ContrastTsetse) > 0)
