@@ -7,7 +7,7 @@ library(ggplot2)
 
 #### First, read and edit in iNaturalist data ####
 
-iNat.data <- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_02_21_specimen_measurements.csv")
+iNat.data <- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_03_17_specimen_measurements.csv")
 iNat.data <- iNat.data %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 
 names(iNat.data)[names(iNat.data) == "revised_uncertainty_km"] <- "extent_km" # Changing column names to make collection datasets for later merging 
@@ -18,7 +18,7 @@ iNat.data$source <- "iNat" # Add a column for data source
 
 
 # First vertical stripes
-iNat.vertical.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_02_21_stripes_vertical.csv") 
+iNat.vertical.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_03_17_stripes_vertical.csv") 
 iNat.vertical.stripe <- iNat.vertical.stripe %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 iNat.vertical.stripe$stripe_distinctness_numerical<-ifelse(iNat.vertical.stripe$stripe_distinctness=="no",0,1) # Assign each stripe a one or a zero depending on distinctness
 iNat.vertical.stripe.by<-by(iNat.vertical.stripe$stripe_distinctness_numerical, iNat.vertical.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
@@ -28,7 +28,7 @@ iNat.vertical.stripe.by<-rename(iNat.vertical.stripe.by, "ï..specimen_id"="rown
 
 # Now horizontal
 
-iNat.horizontal.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_02_21_stripes_horizontal.csv") 
+iNat.horizontal.stripe<- read.csv("Data_backup/Working Copy/iNat/Stripe-athon Datasheet_2025_03_17_stripes_horizontal.csv") 
 iNat.horizontal.stripe <- iNat.horizontal.stripe %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 iNat.horizontal.stripe$stripe_distinctness_numerical<-ifelse(iNat.horizontal.stripe$stripe_distinctness=="no",0,1)
 iNat.horizontal.stripe.by<-by(iNat.horizontal.stripe$stripe_distinctness_numerical, iNat.horizontal.stripe$ï..specimen_id, mean) # Average the ones and zeros for each unique id to give a percent distinctiveness
@@ -49,6 +49,8 @@ iNat.data <- iNat.data %>% dplyr::filter(extent_km < 200)
 names(iNat.data)[names(iNat.data) == "number_vertstripes"] <- "number_vertstripes_MODEL" # Changing column names to match other dataset
 names(iNat.data)[names(iNat.data) == "number_horizontal_stripes"] <- "number_horizontal_stripes_MODEL" # Changing column names to match other dataset
 
+write.csv(iNat.data %>% group_by(country) %>% summarise(n = n()),file ="Data_backup/Working Copy/iNatData_byCountry.csv")
+
 
 #### Now the same with the collections data ####
                        
@@ -57,6 +59,11 @@ collections.data <- read.csv("Data_backup/Working Copy/Collections/Stripes Datas
 collections.data <- collections.data %>% dplyr::filter(flag != "yes") # Remove any rows which have been flagged (i.e. where there is any kind of issue with the record)
 
 collections.data$source <- "collection" 
+
+# Add info on where specimens come from
+
+collections.data <- collections.data %>% mutate(museum = ifelse(grepl("^NHMUK", collections.data[,1]), "NHMUK", 
+                                                                ifelse(grepl("^RBINS", collections.data[,1]), "RBINS", "AMNH"))) 
 
 # Combine the collections specimen info with the specimen measurements
 
@@ -123,6 +130,9 @@ collections.data <- collections.data %>% dplyr::filter(extent_km < 200)
 names(collections.data)[names(collections.data) == "revised_species"] <- "species" # Changing column names to match other dataset
 names(collections.data)[names(collections.data) == "number_vertstripes_right"] <- "number_vertstripes_MODEL" # Changing column names to match iNat. We took distinctness measurements on the right side of the skins only, so this is the data we will use in the model
 names(collections.data)[names(collections.data) == "number_horizontal_stripes_right"] <- "number_horizontal_stripes_MODEL" # Changing column names as above
+
+write.csv(collections.data %>% group_by(country, museum) %>% summarise(n = n()),file ="Data_backup/Working Copy/CollectionsData_byCountry.csv")
+
 
 #### Add  mean body size to iNat data
 
@@ -222,20 +232,14 @@ final.data_withPredictors<-final.data_withPredictors %>%
 ### Some Points are missing, we can visualise them below
 
 na_points <- final.data_withPredictors %>% 
-  dplyr::filter(is.nan(final.data_withPredictors$TsetsePresencePROB))
-na_sf <- st_as_sf(na_points, coords = c("longitude", "latitude"), crs = 4326)
+  dplyr::filter(is.nan(TsetsePresencePROB) | 
+                  is.nan(TabanidActivity) | 
+                  is.nan(PNV))
 
-na_points <- final.data_withPredictors %>% 
-  dplyr::filter(is.nan(final.data_withPredictors$TabanidActivity))
-na_sf <- st_as_sf(na_points, coords = c("longitude", "latitude"), crs = 4326)
-
-na_points <- final.data_withPredictors %>% 
-  dplyr::filter(is.nan(final.data_withPredictors$PNV))
 na_sf <- st_as_sf(na_points, coords = c("longitude", "latitude"), crs = 4326)
 
 
-
-plot(PNV)
+plot(TsetsePresence)
 plot(na_sf, pch = 16, col = "red", add=TRUE)
 
 ## Most points missing are values very close to the coast or on islands in lakes, lets replace the missing values with IDW 
@@ -315,5 +319,5 @@ final.data_withPredictors <- final.data_withPredictors_sf %>%
          latitude = st_coordinates(final.data_withPredictors_sf)[, 2])   # Extract Y (Latitude)
 
 
-write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_2025_03_03.csv")
+write.csv(final.data_withPredictors, file="Data_backup/Working Copy/Processed Data/Combined Dataset_2025_03_17.csv")
 
