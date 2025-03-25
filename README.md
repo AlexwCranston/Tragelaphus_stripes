@@ -1,6 +1,6 @@
 # Function of Striping in Tragelaphus Antelopes
 
-Author(s): Alex Cranston
+Author: Alex Cranston
 
 This repository contains all the code used in the paper (in preparation).
 
