@@ -9,9 +9,9 @@ library(gstat)
 
 # Read in Stripe Data
 
-data <- read.csv("Data_backup/Working Copy/Processed Data/Combined Dataset_2025_02_21.csv")
+data <- read.csv("Data_backup/Working Copy/Processed Data/Combined Dataset_2025_03_17.csv")
 
-View(data %>% group_by(species) %>% summarise(n = n())) # Look at the numbers of samples by species and sex
+View(data %>% group_by(species,sex) %>% summarise(n = n())) # Look at the numbers of samples by species and sex
 View(data %>% group_by(source, sex) %>% summarise(n = n())) # Look at the numbers of samples by source and sex. We can see far more NAs for sex in collection data than iNat
 
 
