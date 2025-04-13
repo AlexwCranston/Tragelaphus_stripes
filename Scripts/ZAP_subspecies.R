@@ -48,7 +48,7 @@ glmm.fixed.ZAP_subspecies <- glmmTMB(relative_n_stripes ~ TsetsePresencePROB +
                                      family = truncated_poisson,
                                      data = data)
 
-
+summary(glmm.fixed.ZAP_subspecies)
 # Plot random intercepts for subspecies effect
 # First for conditional part of the model ####
 random.effects.subspecies <- as.data.frame(glmmTMB::ranef(glmm.fixed.ZAP_subspecies))

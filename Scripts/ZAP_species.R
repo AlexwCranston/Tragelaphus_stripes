@@ -108,13 +108,14 @@ sex.by.species.cond.intercept$species <- c("angasii","angasii", "buxtoni","buxto
                                           "spekii","spekii", "strepsiceros","strepsiceros") # Add species label to colour by species
 
 
-ggplot(species.cond.intercept, aes(x = grp, y = condval, color=grp)) +
+cond_species<-ggplot(species.cond.intercept, aes(x = grp, y = condval, color=grp)) +
   geom_point(size = 3) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2)+
-  labs(title = "Random Intercepts by Species - Count",
+  annotate("text", x = -Inf, y = Inf, label="A", hjust = -0.5, vjust=1.5, size = 8, fontface= "bold")+
+  labs(title = NULL,
        y = "Deviation from Overall Intercept",
-       x = "Species",
+       x = NULL,
        color = "Species",
        ) +
   scale_color_manual(values = c(
@@ -129,14 +130,16 @@ ggplot(species.cond.intercept, aes(x = grp, y = condval, color=grp)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1),plot.title=element_text(hjust=0.5))
 
 
-ggplot(sex.by.species.cond.intercept, aes(x = grp, y = condval, color=species)) +
+cond_sex_by_species<-ggplot(sex.by.species.cond.intercept, aes(x = grp, y = condval, color=species)) +
   geom_point(size = 3) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2)+
-  labs(title = "Random Intercepts by Sex by Species - Count",
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+  annotate("text", x = -Inf, y = -Inf, label="A", hjust = -0.5, vjust=-1.2, size = 8, fontface= "bold")+
+  labs(title = NULL,
        y = "Deviation from Overall Intercept",
-       x = "Sex/Species",
-       color = "Species") +
+       x = NULL,
+       color = "Species",
+  ) +
   scale_color_manual(values = c(
     "angasii" = "#1B9E77", "buxtoni" = "#D95F02", "derbianus" = "#7570B3", 
     "eurycerus" = "#E7298A", "imberbis" = "#66A61E", "oryx" = "#E6AB02",
@@ -202,13 +205,14 @@ sex.by.species.binom.intercept$species <- c("angasii","angasii", "buxtoni","buxt
                                            "spekii","spekii", "strepsiceros","strepsiceros")
 
 
-ggplot(species.binom.intercept, aes(x = grp, y = condval, color=grp)) +
+binom_species<-ggplot(species.binom.intercept, aes(x = grp, y = condval, color=grp)) +
   geom_point(size = 3) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2)+
-  labs(title = "Random Intercepts by Species - Binomial",
+  annotate("text", x = -Inf, y = Inf, label="B", hjust = -0.5, vjust=1.5, size = 8, fontface= "bold")+
+  labs(title = NULL,
        y = "Deviation from Overall Intercept",
-       x = "Species",
+       x = NULL,
        color = "Species",
   ) +
   scale_color_manual(values = c(
@@ -224,14 +228,16 @@ ggplot(species.binom.intercept, aes(x = grp, y = condval, color=grp)) +
 
 
 
-ggplot(sex.by.species.binom.intercept, aes(x = grp, y = condval, color=species)) +
+binom_sex_by_species<-ggplot(sex.by.species.binom.intercept, aes(x = grp, y = condval, color=species)) +
   geom_point(size = 3) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2)+
-  labs(title = "Random Intercepts by Sex by Species - Binomial",
+  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) +
+  annotate("text", x = -Inf, y = -Inf, label="B", hjust = -0.5, vjust=-1.2, size = 8, fontface= "bold")+
+  labs(title = NULL,
        y = "Deviation from Overall Intercept",
-       x = "Sex/Species",
-       color = "Species") +
+       x = NULL,
+       color = "Species",
+  ) +
   scale_color_manual(values = c(
     "angasii" = "#1B9E77", "buxtoni" = "#D95F02", "derbianus" = "#7570B3", 
     "eurycerus" = "#E7298A", "imberbis" = "#66A61E", "oryx" = "#E6AB02",
@@ -386,6 +392,8 @@ ggplot(new_data_all, aes(x = TsetsePresencePROB, y = fit.zero, color = species, 
        y = "Probability of Having Stripes",
        title = "Effect of Tsetse Flies on Presence of Stripes (Hurdle Model)") +
   theme_bw()
+
+
 
 
 
